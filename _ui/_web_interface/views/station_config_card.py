@@ -109,7 +109,7 @@ def get_station_config_card_layout():
                 [
                     html.Div("Fixed Heading", id="fixed_heading_label", className="field-label"),
                     dcc.Checklist(
-                        options=option, id="fixed_heading_check", className="field-body", value=en_fixed_heading
+                        options=option, id="fixed_heading_check", className="field-body", value=en_fixed_heading, #disabled=True,
                     ),
                     # html.Div("Fixed Heading:", className="field-label"),
                     # daq.BooleanSwitch(id="fixed_heading_check",
@@ -119,7 +119,6 @@ def get_station_config_card_layout():
                 ],
                 className="field",
                 id="fixed_heading_div",
-                disabled=True,
             ),
             html.Div(
                 [
@@ -132,11 +131,11 @@ def get_station_config_card_layout():
                                 type="number",
                                 className="field-body-textbox",
                                 debounce=True,
+                                #disabled=True,
                             ),
                         ],
                         id="latitude_field",
                         className="field",
-                        disabled=True,
                     ),
                     html.Div(
                         [
@@ -147,11 +146,11 @@ def get_station_config_card_layout():
                                 type="number",
                                 className="field-body-textbox",
                                 debounce=True,
+                                #disabled=True,
                             ),
                         ],
                         id="logitude_field",
                         className="field",
-                        disabled=True,
                     ),
                 ],
                 id="location_fields",
@@ -165,11 +164,11 @@ def get_station_config_card_layout():
                         type="number",
                         className="field-body-textbox",
                         debounce=True,
+                        #disabled=True,
                     ),
                 ],
                 id="heading_field",
                 className="field",
-                disabled=True,
             ),
             html.Div(
                 [
@@ -217,11 +216,11 @@ def get_station_config_card_layout():
                                 className="field-body-textbox",
                                 debounce=True,
                                 min=0,
+                                #disabled=True,
                             ),
                         ],
                         id="min_speed_field",
                         className="field",
-                        disabled=True,
                     ),
                     html.Div(
                         [
@@ -233,15 +232,16 @@ def get_station_config_card_layout():
                                 className="field-body-textbox",
                                 debounce=True,
                                 min=0,
+                                #disabled=True,
                             ),
                         ],
                         id="min_speed_duration_field",
                         className="field",
-                        disabled=True,
                     ),
                 ],
                 id="min_speed_heading_fields",
             ),
         ],
         className="card",
+        style={"display": "none"},
     )

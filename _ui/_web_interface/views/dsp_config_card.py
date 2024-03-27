@@ -33,7 +33,6 @@ def get_dsp_config_card_layout():
                         className="field-body",
                         labelStyle={"display": "inline-block", "verticalAlign": "middle"},
                         id="radio_ant_arrangement",
-                        disabled=True,
                     ),
                 ],
                 className="field",
@@ -135,6 +134,7 @@ def get_dsp_config_card_layout():
                     ),
                 ],
                 className="field",
+                style={"display": "none"},
             ),
             html.Div([html.Div("", id="uca_decorrelation_warning", className="field", style={"color": "#f39c12"})]),
             html.Div(
@@ -169,6 +169,7 @@ def get_dsp_config_card_layout():
                     ),
                 ],
                 className="field",
+                style={"display": "none"},
             ),
             html.Div(
                 [
@@ -190,6 +191,7 @@ def get_dsp_config_card_layout():
                     ),
                 ],
                 className="field",
+                style={"display": "none"},
             ),
         ],
         className="card",
