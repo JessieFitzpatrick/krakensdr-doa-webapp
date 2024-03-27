@@ -97,7 +97,7 @@ def get_daq_config_card_layout():
                 html.Button("Update Receiver Parameters", id="btn-update_rx_param", className="btn"),
             ],
             className="field",
-            display="none"
+            style={'display': 'none'},
         ),
         html.Div(
             [
@@ -115,7 +115,7 @@ def get_daq_config_card_layout():
                 dcc.Checklist(options=option, id="en_basic_daq_cfg", className="field-body", value=en_basic_daq_cfg),
             ],
             className="field",
-            display="none"
+            style={'display': 'none'},
         ),
         html.Div(
             [
@@ -600,7 +600,8 @@ def get_daq_config_card_layout():
                     className="field",
                 ),
             ],
-            id="basic-cfg-container", display="none"
+            id="basic-cfg-container",
+            style={'display': 'none'},
         ),
     ]
 

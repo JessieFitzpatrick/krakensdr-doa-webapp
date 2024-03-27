@@ -29,7 +29,7 @@ def get_station_config_card_layout():
                     ),
                 ],
                 className="field",
-                display="none",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -51,7 +51,7 @@ def get_station_config_card_layout():
                     ),
                 ],
                 className="field",
-                display="none",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -66,7 +66,7 @@ def get_station_config_card_layout():
                 ],
                 id="rdf_mapper_server_address_field",
                 className="field",
-                display="none",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -81,7 +81,7 @@ def get_station_config_card_layout():
                 ],
                 id="krakenpro_field",
                 className="field",
-                display="none",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
