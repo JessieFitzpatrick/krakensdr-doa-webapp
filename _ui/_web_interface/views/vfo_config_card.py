@@ -209,4 +209,5 @@ def get_vfo_config_card_layout():
             ),
         ],
         className="card",
+        style={'display': 'none'},
     )

@@ -17,6 +17,7 @@ layout = html.Div(
                 ),
             ],
             className="ctr_toolbar",
+            style={'display': 'none'},
         ),
     ]
 )

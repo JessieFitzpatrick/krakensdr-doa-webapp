@@ -54,8 +54,9 @@ def get_display_options_card_layout():
                     dcc.Checklist(options=option, id="en_peak_hold", className="field-body", value=en_peak_hold),
                 ],
                 className="field",
-                display="none",
+                style={'display': 'none'},
             ),
         ],
         className="card",
+        style={'display': 'none'},
     )
