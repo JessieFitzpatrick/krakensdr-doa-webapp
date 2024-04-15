@@ -98,7 +98,7 @@ fig_layout = go.Layout(
 )
 doa_fig = go.Figure(layout=fig_layout)
 
-option = [{"label": "", "value": 1}]
+option = [{"label": "", "value": 1, "disabled": True}]
 
 DECORRELATION_OPTIONS = [
     {"label": "Off", "value": "Off"},

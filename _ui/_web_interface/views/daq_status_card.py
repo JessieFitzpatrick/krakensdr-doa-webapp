@@ -82,6 +82,7 @@ layout = html.Div(
                 html.Div("- MHz", id="body_daq_rf_center_freq", className="field-body"),
             ],
             className="field",
+            style={"display": "none"},
         ),
         html.Div(
             [
@@ -89,6 +90,7 @@ layout = html.Div(
                 html.Div("- MHz", id="body_daq_sampling_freq", className="field-body"),
             ],
             className="field",
+            style={"display": "none"},
         ),
         html.Div(
             [
@@ -96,6 +98,7 @@ layout = html.Div(
                 html.Div("- MHz", id="body_dsp_decimated_bw", className="field-body"),
             ],
             className="field",
+            style={"display": "none"},
         ),
         html.Div(
             [
@@ -110,6 +113,7 @@ layout = html.Div(
                 html.Div("- ms", id="body_daq_cpi", className="field-body"),
             ],
             className="field",
+            style={"display": "none"},
         ),
         html.Div(
             [
@@ -117,6 +121,7 @@ layout = html.Div(
                 html.Div("[,] dB", id="body_daq_if_gain", className="field-body"),
             ],
             className="field",
+            style={"display": "none"},
         ),
         html.Div(
             [

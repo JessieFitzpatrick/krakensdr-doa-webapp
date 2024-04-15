@@ -222,7 +222,7 @@ def set_static_heading(heading):
 # Set minimum speed for trustworthy GPS heading
 @app.callback_shared(None, [Input(component_id="min_speed_input", component_property="value")])
 def set_min_speed_for_valid_gps_heading(min_speed):
-    web_interface.module_signal_processor.gps_min_speed_for_valid_heading = min_speed
+    web_interface.module_signal_processor.gps_min_speed_for_valid_heading = 0.0
     web_interface.save_configuration()
 
 
