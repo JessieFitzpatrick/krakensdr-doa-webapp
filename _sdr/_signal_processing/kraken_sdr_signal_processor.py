@@ -97,6 +97,10 @@ class SignalProcessor(threading.Thread):
         self.root_path = root_path
         doa_res_file_path = os.path.join(shared_path, "DOA_value.html")
         self.DOA_res_fd = open(doa_res_file_path, "w+")
+        location_file_path = os.path.join(shared_path, "location_value.html")
+        self.location_fd = open(location_file_path, "w+")
+        status_output_path = os.path.join(shared_path, "sdr_status.html")
+        self.status_fd = open(status_output_path, "w+")
 
         self.module_receiver = module_receiver
         self.data_que = data_que
@@ -206,7 +210,7 @@ class SignalProcessor(threading.Thread):
         self.altitude = 0.0
         self.speed = 0.0
         self.hasgps = hasgps
-        self.usegps = False
+        self.usegps = hasgps
         self.gps_min_speed_for_valid_heading = MIN_SPEED_FOR_VALID_HEADING
         self.gps_min_duration_for_valid_heading = MIN_DURATION_FOR_VALID_HEADING
         self.gps_connected = False
@@ -345,12 +349,18 @@ class SignalProcessor(threading.Thread):
         except Exception:
             pass
 
+        self.status_fd.seek(0)
+        self.status_fd.write(json.dumps(status))
+        self.status_fd.truncate()
+
     def run(self):
         """
         Main processing thread
         """
         # scipy.fft.set_workers(4)
+        n = 0
         while True:
+
             self.is_running = False
             time.sleep(1)
             while self.run_processing:
@@ -359,6 +369,14 @@ class SignalProcessor(threading.Thread):
 
                 if self.hasgps and self.usegps:
                     self.update_location_and_timestamp()
+                else:
+                    self.location_fd.seek(0)
+                    position_json = {"hasgps": self.hasgps, "usegps": self.usegps, "comment": "Not updating location and timestamp"}
+                    self.location_fd.write(json.dumps(position_json))
+                    self.location_fd.truncate()
+
+                self.output_empty_doa_row("checking that loop is looping" + str(n))
+                n += 1
 
                 # -----> ACQUIRE NEW DATA FRAME <-----
                 get_iq_failed = self.module_receiver.get_iq_online()
@@ -388,6 +406,7 @@ class SignalProcessor(threading.Thread):
                             inadequate power supply, overloaded CPU, wrong host OS settings, etc."""
                         )
                     self.dropped_frames += 1
+                    self.output_empty_doa_row("no sample size and get iq failed")
                 elif en_proc:
                     self.timestamp = self.module_receiver.iq_header.time_stamp
                     self.adc_overdrive = self.module_receiver.iq_header.adc_overdrive_flags
@@ -911,6 +930,8 @@ class SignalProcessor(threading.Thread):
                             pass
                         else:
                             self.logger.error(f"Invalid DOA Result data format: {self.DOA_data_format}")
+                else:#data not ready (assume this means no new data)
+                    self.output_empty_doa_row("not en proc (processes not enabled")
 
                 stop_time = time.time()
 
@@ -935,6 +956,25 @@ class SignalProcessor(threading.Thread):
                 except Exception:
                     # Discard data, UI couldn't consume fast enough
                     pass
+
+    def output_empty_doa_row(self, comment):
+        # KrakenSDR Android App Output
+        message = ""
+        message += f"{self.timestamp}, {np.nan}, {np.nan}, {np.nan}, "
+        message += f"{self.freq_list[0]}, {self.DOA_ant_alignment}, {0}, {self.station_id}, "
+        message += f"{self.latitude}, {self.longitude}, {self.heading}, {self.heading}, "
+        message += "GPS, R, R, R, R"  # Reserve 6 entries for other things # NOTE: Second heading is reserved for GPS heading / compass heading differentiation
+
+        doa_result_log = [np.nan] * 360
+        for i in range(len(doa_result_log)):
+            message += ", " + str(doa_result_log[i])
+
+        message += comment
+        message += " \n"
+
+        self.DOA_res_fd.seek(0)
+        self.DOA_res_fd.write(message)
+        self.DOA_res_fd.truncate()
 
     def estimate_DOA(self, processed_signal, vfo_freq):
         """
@@ -1060,6 +1100,7 @@ class SignalProcessor(threading.Thread):
 
     # Get GPS Data
     def update_location_and_timestamp(self):
+        self.enable_gps()
         if self.gps_connected:
             try:
                 packet = gpsd.get_current()
@@ -1081,15 +1122,29 @@ class SignalProcessor(threading.Thread):
                 self.gps_status = "Connected"
                 self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
                 output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading, comment)
+
             except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
                 self.latitude = self.longitude = 0.0
                 self.gps_timestamp = 0
                 self.heading = self.heading if self.fixed_heading else 0.0
                 self.logger.error("gpsd error, nofix")
                 self.gps_status = "Error"
+                comment = "GPS status is Error (possibly due to gpsd no fix error)."
+
+            self.location_fd.seek(0)
+            position_json = {"timestamp": self.gps_timestamp, "latitude": self.latitude, "longitude": self.longitude,
+                             "heading": self.heading, "comment": comment}
+            self.location_fd.write(json.dumps(position_json))
+            self.location_fd.truncate()
         else:
-            self.logger.error("Trying to use GPS, but can't connect to gpsd")
+            comment = "Trying to use GPS, but can't connect to gpsd"
+            self.logger.error(comment)
             self.gps_status = "Error"
+            self.location_fd.seek(0)
+            position_json = {"timestamp": 0, "latitude": 0.0, "longitude": 0.0,
+                             "heading": 0.0, "comment": comment}
+            self.location_fd.write(json.dumps(position_json))
+            self.location_fd.truncate()
 
     def wr_xml(
         self,
