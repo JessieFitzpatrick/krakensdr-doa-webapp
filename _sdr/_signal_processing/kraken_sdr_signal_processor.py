@@ -74,8 +74,8 @@ except ModuleNotFoundError:
     hasgps = False
     print("Can't find gpsd - ok if no external gps used")
 
-MIN_SPEED_FOR_VALID_HEADING = 0.5  # m / s
-MIN_DURATION_FOR_VALID_HEADING = 3.0  # s
+MIN_SPEED_FOR_VALID_HEADING = 0.0  # m / s
+MIN_DURATION_FOR_VALID_HEADING = 1.0  # s
 DEFAULT_VFO_FIR_ORDER_FACTOR = int(2)
 DEFAULT_ROOT_MUSIC_STD_DEGREES = 1
 
@@ -1065,14 +1065,22 @@ class SignalProcessor(threading.Thread):
                 packet = gpsd.get_current()
                 self.latitude, self.longitude = packet.position()
                 self.speed = packet.speed()
-                if (not self.fixed_heading) and (self.speed >= self.gps_min_speed_for_valid_heading):
-                    if (time.time() - self.time_of_last_invalid_heading) >= self.gps_min_duration_for_valid_heading:
+                comment = ""
+                if (not self.fixed_heading):
+                    td = time.time() - self.time_of_last_invalid_heading
+                    if td >= self.gps_min_duration_for_valid_heading:
                         self.heading = round(packet.movement().get("track"), 1)
+                        comment = (f"Speed {self.speed} fast enough. Time difference {td} greater than min duration. "
+                                   f"Heading {self.heading} calculated.")
+                    else:
+                        self.heading = 0.0
+                        comment = (f"Speed {self.speed} fast enough. Time difference {td} less than min duration. "
+                                   f"Heading not recalculated.")
                 else:
-                    self.time_of_last_invalid_heading = time.time()
+                    comment = f"Fixed heading of {self.heading}."
                 self.gps_status = "Connected"
                 self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
-                output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading)
+                output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading, comment)
             except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
                 self.latitude = self.longitude = 0.0
                 self.gps_timestamp = 0
@@ -1767,7 +1775,7 @@ def calculate_doa_papr(DOA_data):
        self.processed_signal = np.zeros([self.channel_number, len(self.filtered_signal)])
 """
 
-def output_current_position(timestamp, latitude, longitude, heading):
-    position_json = {"timestamp": timestamp, "latitude": latitude, "longitude": longitude, "heading": heading}
+def output_current_position(timestamp, latitude, longitude, heading, comment):
+    position_json = {"timestamp": timestamp, "latitude": latitude, "longitude": longitude, "heading": heading, "comment": comment}
     with open(position_file_path, 'w') as f:
         f.write(json.dumps(position_json))

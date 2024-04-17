@@ -79,4 +79,5 @@ def get_recording_config_card_layout():
             ),
         ],
         className="card",
+        style={'display': 'none'},
     )

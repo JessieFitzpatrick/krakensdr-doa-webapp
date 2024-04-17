@@ -68,6 +68,7 @@ def write_config_file_dict(web_interface, param_dict, dsp_settings):
         return 0, []
 
 
+# noinspection PyListCreation
 def generate_config_page_layout(web_interface):
     vfo_card = get_vfo_card_layout()
     config_page_component_list = [

@@ -75,6 +75,7 @@ def get_daq_config_card_layout():
                     min=24,
                     debounce=True,
                     className="field-body-textbox",
+                    disabled=True,
                 ),
             ],
             className="field",
@@ -120,6 +121,7 @@ def get_daq_config_card_layout():
                     clearable=False,
                     style={"display": "inline-block"},
                     className="field-body",
+                    disabled=True,
                 ),
             ],
             className="field",
@@ -129,6 +131,7 @@ def get_daq_config_card_layout():
                 html.Button("Update Receiver Parameters", id="btn-update_rx_param", className="btn"),
             ],
             className="field",
+            style={'display': 'none'},
         ),
         html.Div(
             [
@@ -146,6 +149,7 @@ def get_daq_config_card_layout():
                 dcc.Checklist(options=option, id="en_basic_daq_cfg", className="field-body", value=en_basic_daq_cfg),
             ],
             className="field",
+            style={'display': 'none'},
         ),
         html.Div(
             [
@@ -631,6 +635,7 @@ def get_daq_config_card_layout():
                 ),
             ],
             id="basic-cfg-container",
+            style={'display': 'none'},
         ),
     ]
 

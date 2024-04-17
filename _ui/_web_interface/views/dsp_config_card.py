@@ -78,6 +78,7 @@ def get_dsp_config_card_layout():
                                 min=0.001,
                                 debounce=True,
                                 className="field-body-textbox",
+                                disabled=True,
                             ),
                         ]
                     ),
@@ -108,12 +109,13 @@ def get_dsp_config_card_layout():
             html.Div(
                 [
                     html.Div("DoA Algorithm:", id="label_doa_method", className="field-label"),
-                    dcc.Dropdown(
+                    dcc.Input(
                         id="doa_method",
-                        options=DOA_METHODS,
                         value=web_interface.module_signal_processor.DOA_algorithm,
+                        type="String",
+                        className="field-body-textbox",
                         style={"display": "inline-block"},
-                        className="field-body",
+                        disabled=True,
                     ),
                 ],
                 className="field",
@@ -128,9 +130,11 @@ def get_dsp_config_card_layout():
                         value=web_interface.module_signal_processor.DOA_decorrelation_method,
                         style={"display": "inline-block"},
                         className="field-body",
+                        disabled=True,
                     ),
                 ],
                 className="field",
+                style={"display": "none"},
             ),
             html.Div([html.Div("", id="uca_decorrelation_warning", className="field", style={"color": "#f39c12"})]),
             html.Div(
@@ -146,6 +150,7 @@ def get_dsp_config_card_layout():
                         value=web_interface.module_signal_processor.ula_direction,
                         style={"display": "inline-block"},
                         className="field-body",
+                        disabled=True,
                     ),
                 ],
                 className="field",
@@ -160,9 +165,11 @@ def get_dsp_config_card_layout():
                         type="number",
                         className="field-body-textbox",
                         debounce=True,
+                        disabled=True,
                     ),
                 ],
                 className="field",
+                style={"display": "none"},
             ),
             html.Div(
                 [
@@ -180,9 +187,11 @@ def get_dsp_config_card_layout():
                         value=web_interface.module_signal_processor.DOA_expected_num_of_sources,
                         style={"display": "inline-block"},
                         className="field-body",
+                        disabled=True,
                     ),
                 ],
                 className="field",
+                style={"display": "none"},
             ),
         ],
         className="card",

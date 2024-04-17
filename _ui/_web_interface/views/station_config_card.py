@@ -29,6 +29,7 @@ def get_station_config_card_layout():
                     ),
                 ],
                 className="field",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -50,6 +51,7 @@ def get_station_config_card_layout():
                     ),
                 ],
                 className="field",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -64,6 +66,7 @@ def get_station_config_card_layout():
                 ],
                 id="rdf_mapper_server_address_field",
                 className="field",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -78,6 +81,7 @@ def get_station_config_card_layout():
                 ],
                 id="krakenpro_field",
                 className="field",
+                style={'display': 'none'},
             ),
             html.Div(
                 [
@@ -85,12 +89,13 @@ def get_station_config_card_layout():
                     dcc.Dropdown(
                         id="loc_src_dropdown",
                         options=[
-                            {"label": "None", "value": "None"},
-                            {"label": "Static", "value": "Static"},
+                            {"label": "None", "value": "None", "disabled": True},
+                            {"label": "Static", "value": "Static", "disabled": True},
                             {
                                 "label": "GPS",
                                 "value": "gpsd",
-                                "disabled": not web_interface.module_signal_processor.hasgps,
+                                #"disabled": not web_interface.module_signal_processor.hasgps,
+                                "disabled": True,
                             },
                         ],
                         value=web_interface.location_source,
@@ -104,7 +109,10 @@ def get_station_config_card_layout():
                 [
                     html.Div("Fixed Heading", id="fixed_heading_label", className="field-label"),
                     dcc.Checklist(
-                        options=option, id="fixed_heading_check", className="field-body", value=en_fixed_heading
+                        options=[{"label": "", "value": 1, "disabled": True}],
+                        id="fixed_heading_check",
+                        className="field-body",
+                        value=en_fixed_heading,
                     ),
                     # html.Div("Fixed Heading:", className="field-label"),
                     # daq.BooleanSwitch(id="fixed_heading_check",
@@ -126,6 +134,7 @@ def get_station_config_card_layout():
                                 type="number",
                                 className="field-body-textbox",
                                 debounce=True,
+                                readOnly=True,
                             ),
                         ],
                         id="latitude_field",
@@ -140,6 +149,7 @@ def get_station_config_card_layout():
                                 type="number",
                                 className="field-body-textbox",
                                 debounce=True,
+                                readOnly=True,
                             ),
                         ],
                         id="logitude_field",
@@ -157,6 +167,7 @@ def get_station_config_card_layout():
                         type="number",
                         className="field-body-textbox",
                         debounce=True,
+                        readOnly=True,
                     ),
                 ],
                 id="heading_field",
@@ -208,6 +219,7 @@ def get_station_config_card_layout():
                                 className="field-body-textbox",
                                 debounce=True,
                                 min=0,
+                                readOnly=True,
                             ),
                         ],
                         id="min_speed_field",
@@ -223,6 +235,7 @@ def get_station_config_card_layout():
                                 className="field-body-textbox",
                                 debounce=True,
                                 min=0,
+                                readOnly=True,
                             ),
                         ],
                         id="min_speed_duration_field",
@@ -230,6 +243,7 @@ def get_station_config_card_layout():
                     ),
                 ],
                 id="min_speed_heading_fields",
+                style={'display': 'none'},
             ),
         ],
         className="card",

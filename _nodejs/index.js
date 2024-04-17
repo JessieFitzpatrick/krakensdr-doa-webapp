@@ -158,7 +158,7 @@ checkForRemoteMode()
 app.use(express.json())
 
 app.get('/', (req, res) => {
-    res.send('Hi, this is the KrakenSDR middleware server :)')
+    res.send('Hi, this is the SDR middleware server :)')
 })
 
 app.post('/doapost', (req, res) => {
@@ -322,7 +322,7 @@ function setGPSFixedHeading(heading){
 
     let editedSettings = fs.readFileSync(settingsJsonPath, "utf8");
     let editedJson = JSON.parse(editedSettings);
-    let success = (editedJson.location_source==="gpsd"
+    let success = (editedJson.location_source==="Static"
         && editedJson.gps_fixed_heading === true
         && editedJson.heading === heading);
 
@@ -362,8 +362,12 @@ app.post("/enableGPS", (req, res) => {
         success = false;
     }
 
+    let rawdata = fs.readFileSync(statusJsonPath, "utf8");
+    let statusJson = JSON.parse(rawdata);
+    let connectionStatus = statusJson.gps_status;
+
     res.setHeader('content-type', 'application/json');
-    res.send({"success": success});
+    res.send({"success": success, "gpsStatus": connectionStatus});
 })
 
 /*

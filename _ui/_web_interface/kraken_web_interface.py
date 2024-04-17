@@ -47,7 +47,7 @@ class WebInterface:
         self._avg_win_size = 10
         self._update_rate_arr = None
 
-        self._doa_fig_type = dsp_settings.get("doa_fig_type", "Linear")
+        self._doa_fig_type = "Polar"
 
         # Que to communicate with the signal processing module
         self.sp_data_que = queue.Queue(1)
@@ -129,8 +129,8 @@ class WebInterface:
         self.module_signal_processor.longitude = dsp_settings.get("longitude", 0.0)
         self.module_signal_processor.heading = dsp_settings.get("heading", 0.0)
         self.module_signal_processor.fixed_heading = dsp_settings.get("gps_fixed_heading", False)
-        self.module_signal_processor.gps_min_speed_for_valid_heading = dsp_settings.get("gps_min_speed", 2)
-        self.module_signal_processor.gps_min_duration_for_valid_heading = dsp_settings.get("gps_min_speed_duration", 3)
+        self.module_signal_processor.gps_min_speed_for_valid_heading = dsp_settings.get("gps_min_speed", 0.0)
+        self.module_signal_processor.gps_min_duration_for_valid_heading = dsp_settings.get("gps_min_speed_duration", 1)
 
         # Kraken Pro Remote Key
         self.module_signal_processor.krakenpro_key = dsp_settings.get("krakenpro_key", "0ae4ca6b3")
@@ -212,7 +212,7 @@ class WebInterface:
         self.doas = []  # Final measured DoAs [deg]
         self.max_doas_list = []
         self.doa_confidences = []
-        self.compass_offset = dsp_settings.get("compass_offset", 0)
+        self.compass_offset = 0##dsp_settings.get("compass_offset", 0)
         self.module_signal_processor.compass_offset = self.compass_offset
         self.daq_dsp_latency = 0  # [ms]
         self.max_amplitude = 0  # Used to help setting the threshold level of the squelch
@@ -357,7 +357,7 @@ class WebInterface:
         data = {}
 
         # DAQ Configurations
-        data["center_freq"] = 416.588
+        data["center_freq"] = 458.6
         data["uniform_gain"] = 15.7
         data["data_interface"] = dsp_settings.get("data_interface", "shmem")
         data["default_ip"] = dsp_settings.get("default_ip", "0.0.0.0")
@@ -370,15 +370,15 @@ class WebInterface:
         data["ant_arrangement"] = "UCA"
         data["ula_direction"] = "Both"
         # self.module_signal_processor.DOA_inter_elem_space
-        data["ant_spacing_meters"] = 0.21
-        data["custom_array_x_meters"] = "0.21,0.06,-0.17,-0.17,0.07"
-        data["custom_array_y_meters"] = "0.00,-0.20,-0.12,0.12,0.20"
+        data["ant_spacing_meters"] = 0.27
+        data["custom_array_x_meters"] = "0,0,0,0,0"
+        data["custom_array_y_meters"] = "0,0,0,0,0"
         data["array_offset"] = 0
 
         data["doa_method"] = "MUSIC"
         data["doa_decorrelation_method"] = "Off"
         data["compass_offset"] = 0
-        data["doa_fig_type"] = "Linear"
+        data["doa_fig_type"] = "Polar"
         data["en_peak_hold"] = False
         data["expected_num_of_sources"] = 1
 
@@ -391,7 +391,7 @@ class WebInterface:
         data["logging_level"] = 5
         data["disable_tooltips"] = 0
 
-        # Output Data format. XML for Kerberos, CSV for Kracken, JSON future
+        # Output Data format. XML for Kerberos, CSV for Kraken, JSON future
         # XML, CSV, or JSON
         data["doa_data_format"] = "Kraken App"
 
@@ -405,8 +405,8 @@ class WebInterface:
         data["mapping_server_url"] = "wss://map.krakenrf.com:2096"
         data["rdf_mapper_server"] = "http://MY_RDF_MAPPER_SERVER.com/save.php"
         data["gps_fixed_heading"] = False
-        data["gps_min_speed"] = 2
-        data["gps_min_speed_duration"] = 3
+        data["gps_min_speed"] = 0.0
+        data["gps_min_speed_duration"] = 1
 
         # VFO Information
         data["spectrum_calculation"] = "Single"
