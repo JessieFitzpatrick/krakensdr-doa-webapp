@@ -97,6 +97,10 @@ class SignalProcessor(threading.Thread):
         self.root_path = root_path
         doa_res_file_path = os.path.join(shared_path, "DOA_value.html")
         self.DOA_res_fd = open(doa_res_file_path, "w+")
+        location_file_path = os.path.join(shared_path, "location_value.html")
+        self.location_fd = open(location_file_path, "w+")
+        spectrum_output_path = os.path.join(shared_path, "spectrum_value.html")
+        self.spectrum_fd = open(spectrum_output_path, "w+")
 
         self.module_receiver = module_receiver
         self.data_que = data_que
@@ -283,7 +287,7 @@ class SignalProcessor(threading.Thread):
 
         for i, vfo_squelch_mode in enumerate(self.vfo_squelch_mode[: self.active_vfos]):
             if vfo_squelch_mode == "Auto Channel" or (
-                vfo_squelch_mode == "Default" and self.vfo_default_squelch_mode == "Auto Channel"
+                    vfo_squelch_mode == "Default" and self.vfo_default_squelch_mode == "Auto Channel"
             ):
                 vfo_bw_freq_window = int(self.vfo_bw[i] / (sampling_freq / N))
                 freq_idx, nearsest = find_nearest(real_freqs, self.vfo_freq[i])
@@ -332,10 +336,10 @@ class SignalProcessor(threading.Thread):
 
         status["daq_status"] = daq_status
         status["daq_ok"] = (
-            not iq_header_emtpy
-            and daq_status.get("frame_sync", False)
-            and daq_status.get("sample_delay_sync", False)
-            and daq_status.get("iq_sync", False)
+                not iq_header_emtpy
+                and daq_status.get("frame_sync", False)
+                and daq_status.get("sample_delay_sync", False)
+                and daq_status.get("iq_sync", False)
         )
         status["daq_num_dropped_frames"] = self.dropped_frames
 
@@ -374,7 +378,7 @@ class SignalProcessor(threading.Thread):
                     You can enable here to process other frame types (such as call type frames)
                 """
                 en_proc = (
-                    self.module_receiver.iq_header.frame_type == self.module_receiver.iq_header.FRAME_TYPE_DATA
+                        self.module_receiver.iq_header.frame_type == self.module_receiver.iq_header.FRAME_TYPE_DATA
                 )  # or \
                 # (self.module_receiver.iq_header.frame_type == self.module_receiver.iq_header.FRAME_TYPE_CAL)# For debug purposes
 
@@ -513,7 +517,7 @@ class SignalProcessor(threading.Thread):
                                     self.vfo_freq[i] = self.module_receiver.daq_center_freq
 
                                 freq = (
-                                    self.vfo_freq[i] - self.module_receiver.daq_center_freq
+                                        self.vfo_freq[i] - self.module_receiver.daq_center_freq
                                 )  # ch_freq is relative to -sample_freq/2 : sample_freq/2, so correct for that and get the actual freq
 
                                 if self.vfo_mode == "Auto":  # Mode 1 is Auto Max Mode
@@ -541,51 +545,45 @@ class SignalProcessor(threading.Thread):
 
                                 if self.spectrum_fig_type == "Single":  # Do CH1 only (or make channel selectable)
                                     spectrum_channel = self.spectrum[
-                                        1,
-                                        max(vfo_lower_bound, 0) : min(vfo_upper_bound, spectrum_window_size),
-                                    ]
+                                                       1,
+                                                       max(vfo_lower_bound, 0): min(vfo_upper_bound,
+                                                                                    spectrum_window_size),
+                                                       ]
                                     max_amplitude = np.max(spectrum_channel)
                                 else:
                                     spectrum_channel = self.spectrum[
-                                        :,
-                                        max(vfo_lower_bound, 0) : min(vfo_upper_bound, spectrum_window_size),
-                                    ]
+                                                       :,
+                                                       max(vfo_lower_bound, 0): min(vfo_upper_bound,
+                                                                                    spectrum_window_size),
+                                                       ]
                                     max_amplitude = np.max(
                                         spectrum_channel[
-                                            1 : self.module_receiver.iq_header.active_ant_chs + 1,
-                                            :,
+                                        1: self.module_receiver.iq_header.active_ant_chs + 1,
+                                        :,
                                         ]
                                     )
 
                                 # *** HERE WE NEED TO PERFORM THE SPECTRUM UPDATE TOO ***
-                                if self.en_spectrum:
-                                    # Selected Channel Window
-                                    signal_window = np.zeros(spectrum_window_size) - 120
-                                    signal_window[
-                                        max(vfo_lower_bound, 4) : min(vfo_upper_bound, spectrum_window_size - 4)
-                                    ] = 0  # max_amplitude
-                                    self.spectrum[self.channel_number + (2 * i + 1), :] = (
-                                        signal_window  # np.ones(len(spectrum[1,:])) * self.module_receiver.daq_squelch_th_dB # Plot threshold line
-                                    )
+                                # if self.en_spectrum:
+                                # Selected Channel Window
+                                signal_window = np.zeros(spectrum_window_size) - 120
+                                signal_window[max(vfo_lower_bound, 4): min(vfo_upper_bound, spectrum_window_size - 4)] = 0  # max_amplitude
+                                self.spectrum[self.channel_number + (2 * i + 1), :] = (signal_window)
 
-                                    # Squelch Window
-                                    signal_window[
-                                        max(vfo_lower_bound, 4) : min(vfo_upper_bound, spectrum_window_size - 4)
-                                    ] = self.vfo_squelch[i]
-                                    self.spectrum[self.channel_number + (2 * i + 2), :] = (
-                                        signal_window  # np.ones(len(spectrum[1,:])) * self.module_receiver.daq_squelch_th_dB # Plot threshold line
-                                    )
+                                # Squelch Window
+                                signal_window[max(vfo_lower_bound, 4): min(vfo_upper_bound, spectrum_window_size - 4)] = self.vfo_squelch[i]
+                                self.spectrum[self.channel_number + (2 * i + 2), :] = (signal_window)
 
-                                # -----> DoA ESIMATION <-----
+                                # -----> DoA ESTIMATION <-----
 
                                 # datetime object containing current date and time
                                 now = datetime.now()
                                 now_dt_str = now.strftime("%d-%b-%Y_%Hh%Mm%Ss")
                                 if (
-                                    self.en_DOA_estimation
-                                    and self.channel_number > 1
-                                    and max_amplitude > self.vfo_squelch[i]
-                                    and (i == self.output_vfo or self.output_vfo < 0)
+                                        self.en_DOA_estimation
+                                        and self.channel_number > 1
+                                        and max_amplitude > self.vfo_squelch[i]
+                                        and (i == self.output_vfo or self.output_vfo < 0)
                                 ):
                                     write_freq = int(self.vfo_freq[i])
                                     # Do channelization
@@ -637,7 +635,7 @@ class SignalProcessor(threading.Thread):
 
                                     self.vfo_time[i] += self.processed_signal[1].size / sampling_freq
                                     if 0 < self.max_demod_timeout < self.vfo_time[i] and (
-                                        self.vfo_demod_modes[i] == "FM" or self.vfo_iq_enabled[i]
+                                            self.vfo_demod_modes[i] == "FM" or self.vfo_iq_enabled[i]
                                     ):
                                         self.vfo_demod_channel[i] = np.array([])
                                         self.vfo_theta_channel[i] = []
@@ -687,11 +685,11 @@ class SignalProcessor(threading.Thread):
                                 return avg_theta, max(diff_thetas)
 
                             for (
-                                now_dt_str,
-                                vfo_freq,
-                                fm_demod_channel,
-                                iq_channel,
-                                thetas,
+                                    now_dt_str,
+                                    vfo_freq,
+                                    fm_demod_channel,
+                                    iq_channel,
+                                    thetas,
                             ) in self.fm_demod_channel_list:
                                 store_demod_channel = fm_demod_channel.size > 0
                                 store_iq_channel = iq_channel.size > 0
@@ -742,6 +740,19 @@ class SignalProcessor(threading.Thread):
                         )
                         que_data_packet.append(["spectrum", spectrum_plot_data])
 
+                    try:
+                        spectrum_message = ""
+                        x = self.spectrum[0, :] + self.module_receiver.daq_center_freq * 10**6
+                        spectrum_message += f"{self.timestamp}, {x[0]}, {len(x)}, {abs(x[1]-x[0])}"
+                        spec = self.spectrum[1, :]
+                        for pow in spec:
+                            spectrum_message += ", " + "{:.2f}".format(pow)
+                    except:
+                        spectrum_message = "null"
+                    self.spectrum_fd.seek(0)
+                    self.spectrum_fd.write(spectrum_message)
+                    self.spectrum_fd.truncate()
+
                     daq_cpi = int(
                         self.module_receiver.iq_header.cpi_length * 1000 / self.module_receiver.iq_header.sampling_freq
                     )
@@ -772,13 +783,14 @@ class SignalProcessor(threading.Thread):
 
                                 if self.en_data_record:
                                     time_elapsed = (
-                                        time.time() - self.last_write_time[j]
+                                            time.time() - self.last_write_time[j]
                                     )  # Make a list of 16 last_write_times
                                     if time_elapsed > self.write_interval:
                                         self.last_write_time[j] = time.time()
                                         self.data_record_fd.write(sub_message)
 
                                 message += sub_message
+                                message += " \n"
 
                             self.DOA_res_fd.seek(0)
                             self.DOA_res_fd.write(message)
@@ -847,7 +859,7 @@ class SignalProcessor(threading.Thread):
                         elif self.DOA_data_format == "RDF Mapper":
                             time_elapsed = time.time() - self.rdf_mapper_last_write_time
                             if (
-                                time_elapsed > 1
+                                    time_elapsed > 1
                             ):  # Upload to RDF Mapper server only every 1s to ensure we dont overload his server
                                 self.rdf_mapper_last_write_time = time.time()
                                 elat, elng = calculate_end_lat_lng(
@@ -919,7 +931,7 @@ class SignalProcessor(threading.Thread):
                     [
                         "latency",
                         (
-                            (int(stop_time * 10**3) - self.module_receiver.iq_header.time_stamp)
+                            (int(stop_time * 10 ** 3) - self.module_receiver.iq_header.time_stamp)
                             if not get_iq_failed
                             else 0
                         ),
@@ -943,7 +955,7 @@ class SignalProcessor(threading.Thread):
 
         antennas_alignment = self.DOA_ant_alignment
         if antennas_alignment == "UCA" and (
-            self.DOA_algorithm == "ROOT-MUSIC" or self.DOA_decorrelation_method != "Off"
+                self.DOA_algorithm == "ROOT-MUSIC" or self.DOA_decorrelation_method != "Off"
         ):
             antennas_alignment = "VULA"
 
@@ -1031,8 +1043,8 @@ class SignalProcessor(threading.Thread):
         # ULA Array, choose bewteen the full omnidirecitonal 360 data, or forward/backward data only
         if self.DOA_ant_alignment == "ULA":
             thetas = (
-                np.linspace(0, 359, 360) - self.array_offset
-            ) % 360  # Rotate array with offset (in reverse to compensate for rotation done in gen_scanning_vectors)
+                             np.linspace(0, 359, 360) - self.array_offset
+                     ) % 360  # Rotate array with offset (in reverse to compensate for rotation done in gen_scanning_vectors)
             if self.ula_direction == "Forward":
                 self.DOA[thetas[90:270].astype(int)] = min(self.DOA)
             # self.DOA[90:270] = min(self.DOA)
@@ -1065,8 +1077,11 @@ class SignalProcessor(threading.Thread):
                 packet = gpsd.get_current()
                 self.latitude, self.longitude = packet.position()
                 self.speed = packet.speed()
+
                 comment = ""
-                if (not self.fixed_heading):
+                if self.fixed_heading:
+                    comment = f"Fixed heading of {self.heading}."
+                else:
                     td = time.time() - self.time_of_last_invalid_heading
                     if td >= self.gps_min_duration_for_valid_heading:
                         self.heading = round(packet.movement().get("track"), 1)
@@ -1076,11 +1091,11 @@ class SignalProcessor(threading.Thread):
                         self.heading = 0.0
                         comment = (f"Speed {self.speed} fast enough. Time difference {td} less than min duration. "
                                    f"Heading not recalculated.")
-                else:
-                    comment = f"Fixed heading of {self.heading}."
+
                 self.gps_status = "Connected"
                 self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
                 output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading, comment)
+
             except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
                 self.latitude = self.longitude = 0.0
                 self.gps_timestamp = 0
@@ -1091,20 +1106,27 @@ class SignalProcessor(threading.Thread):
             self.logger.error("Trying to use GPS, but can't connect to gpsd")
             self.gps_status = "Error"
 
+        # output position, regardless of what result is
+        position = {"gps_status": self.gps_status, "timestamp": self.gps_timestamp, "latitude": self.latitude,
+                    "longitude": self.longitude, "heading": self.heading}
+        self.location_fd.seek(0)
+        self.location_fd.write(json.dumps(position))
+        self.location_fd.truncate()
+
     def wr_xml(
-        self,
-        station_id,
-        doa,
-        conf,
-        pwr,
-        freq,
-        latitude,
-        longitude,
-        heading,
-        speed,
-        adc_overdrive,
-        num_corr_sources,
-        snr_db,
+            self,
+            station_id,
+            doa,
+            conf,
+            pwr,
+            freq,
+            latitude,
+            longitude,
+            heading,
+            speed,
+            adc_overdrive,
+            num_corr_sources,
+            snr_db,
     ):
         # Kerberos-ify the data
         confidence_str = "{}".format(np.max(int(float(conf) * 100)))
@@ -1154,22 +1176,22 @@ class SignalProcessor(threading.Thread):
             file.write(html_str)
 
     def wr_kerberos(
-        self,
-        DOA_str,
-        confidence_str,
-        max_power_level_str,
+            self,
+            DOA_str,
+            confidence_str,
+            max_power_level_str,
     ):
         confidence_str = "{}".format(np.max(int(float(confidence_str) * 100)))
         max_power_level_str = "{:.1f}".format((np.maximum(-100, float(max_power_level_str) + 100)))
 
         html_str = (
-            "<DATA>\n<DOA>"
-            + DOA_str
-            + "</DOA>\n<CONF>"
-            + confidence_str
-            + "</CONF>\n<PWR>"
-            + max_power_level_str
-            + "</PWR>\n</DATA>"
+                "<DATA>\n<DOA>"
+                + DOA_str
+                + "</DOA>\n<CONF>"
+                + confidence_str
+                + "</CONF>\n<PWR>"
+                + max_power_level_str
+                + "</PWR>\n</DATA>"
         )
         self.DOA_res_fd.seek(0)
         self.DOA_res_fd.write(html_str)
@@ -1177,26 +1199,26 @@ class SignalProcessor(threading.Thread):
         self.logger.debug("DoA results writen: {:s}".format(html_str))
 
     def wr_json(
-        self,
-        station_id,
-        DOA_str,
-        confidence_str,
-        max_power_level_str,
-        freq,
-        doa_result_log,
-        latitude,
-        longitude,
-        heading,
-        speed,
-        adc_overdrive,
-        num_corr_sources,
-        snr_db,
+            self,
+            station_id,
+            DOA_str,
+            confidence_str,
+            max_power_level_str,
+            freq,
+            doa_result_log,
+            latitude,
+            longitude,
+            heading,
+            speed,
+            adc_overdrive,
+            num_corr_sources,
+            snr_db,
     ):
         # KrakenSDR Flutter app out
         doaString = str("")
         for i in range(len(doa_result_log)):
             doaString += (
-                "{:.2f}".format(doa_result_log[i] + np.abs(np.min(doa_result_log))) + ","
+                    "{:.2f}".format(doa_result_log[i] + np.abs(np.min(doa_result_log))) + ","
             )  # TODO: After confirmed to work, optimize
 
         # doaString = str('')
@@ -1290,7 +1312,7 @@ def reduce_spectrum(spectrum, spectrum_size, channel_number):
     group = len(spectrum[0, :]) // spectrum_size
     for m in nb.prange(spectrum_elements):
         for i in nb.prange(spectrum_size):
-            spectrum_plot_data[m, i] = np.max(spectrum[m, i * group : group * (i + 1)])
+            spectrum_plot_data[m, i] = np.max(spectrum[m, i * group: group * (i + 1)])
     return spectrum_plot_data
 
 
@@ -1493,7 +1515,7 @@ def doa_root_music(r, signal_dimension, is_vula, inter_element_spacing, array_an
     all_roots = np.roots(p_coeff)
 
     candidate_roots_abs = np.abs(all_roots)
-    sorted_idx = candidate_roots_abs.argsort()[(M - 1 - signal_dimension) : (M - 1)]
+    sorted_idx = candidate_roots_abs.argsort()[(M - 1 - signal_dimension): (M - 1)]
 
     valid_roots = all_roots[sorted_idx]
     args = np.angle(valid_roots)
@@ -1560,7 +1582,7 @@ def T(uca_radius_m: float, frequency_Hz: float, N: int) -> np.ndarray:
     x, L = xi(uca_radius_m, frequency_Hz)
 
     # J
-    J = np.diag([1.0 / ((1j**v) * scipy.special.jv(v, x)) for v in range(-L, L + 1, 1)])
+    J = np.diag([1.0 / ((1j ** v) * scipy.special.jv(v, x)) for v in range(-L, L + 1, 1)])
 
     # F
     F = np.array([[np.exp(2.0j * np.pi * (m * n / N)) for n in range(0, N, 1)] for m in range(-L, L + 1, 1)])
@@ -1775,7 +1797,9 @@ def calculate_doa_papr(DOA_data):
        self.processed_signal = np.zeros([self.channel_number, len(self.filtered_signal)])
 """
 
+
 def output_current_position(timestamp, latitude, longitude, heading, comment):
-    position_json = {"timestamp": timestamp, "latitude": latitude, "longitude": longitude, "heading": heading, "comment": comment}
+    position_json = {"timestamp": timestamp, "latitude": latitude, "longitude": longitude, "heading": heading,
+                     "comment": comment}
     with open(position_file_path, 'w') as f:
         f.write(json.dumps(position_json))
