@@ -361,8 +361,7 @@ class SignalProcessor(threading.Thread):
                 self.is_running = True
                 que_data_packet = []
 
-                if self.hasgps and self.usegps:
-                    self.update_location_and_timestamp()
+                self.update_location_and_timestamp()
 
                 # -----> ACQUIRE NEW DATA FRAME <-----
                 get_iq_failed = self.module_receiver.get_iq_online()
@@ -1072,39 +1071,48 @@ class SignalProcessor(threading.Thread):
 
     # Get GPS Data
     def update_location_and_timestamp(self):
-        if self.gps_connected:
-            try:
-                packet = gpsd.get_current()
-                self.latitude, self.longitude = packet.position()
-                self.speed = packet.speed()
+        if not (self.hasgps and self.usegps):
+            self.latitude = self.longitude = 0.0
+            self.gps_timestamp = 0
+            self.heading = self.heading if self.fixed_heading else 0.0
+            self.gps_status = "Disabled"
+        else:
+            if self.gps_connected:
+                try:
+                    packet = gpsd.get_current()
+                    self.latitude, self.longitude = packet.position()
+                    self.speed = packet.speed()
 
-                comment = ""
-                if self.fixed_heading:
-                    comment = f"Fixed heading of {self.heading}."
-                else:
-                    td = time.time() - self.time_of_last_invalid_heading
-                    if td >= self.gps_min_duration_for_valid_heading:
-                        self.heading = round(packet.movement().get("track"), 1)
-                        comment = (f"Speed {self.speed} fast enough. Time difference {td} greater than min duration. "
-                                   f"Heading {self.heading} calculated.")
+                    comment = ""
+                    if self.fixed_heading:
+                        comment = f"Fixed heading of {self.heading}."
                     else:
-                        self.heading = 0.0
-                        comment = (f"Speed {self.speed} fast enough. Time difference {td} less than min duration. "
-                                   f"Heading not recalculated.")
+                        td = time.time() - self.time_of_last_invalid_heading
+                        if td >= self.gps_min_duration_for_valid_heading:
+                            self.heading = round(packet.movement().get("track"), 1)
+                            comment = (f"Speed {self.speed} fast enough. Time difference {td} greater than min duration. "
+                                       f"Heading {self.heading} calculated.")
+                        else:
+                            self.heading = 0.0
+                            comment = (f"Speed {self.speed} fast enough. Time difference {td} less than min duration. "
+                                       f"Heading not recalculated.")
 
-                self.gps_status = "Connected"
-                self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
-                output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading, comment)
+                    self.gps_status = "Connected"
+                    self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
+                    output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading, comment)
 
-            except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
+                except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
+                    self.latitude = self.longitude = 0.0
+                    self.gps_timestamp = 0
+                    self.heading = self.heading if self.fixed_heading else 0.0
+                    self.logger.error("gpsd error, nofix")
+                    self.gps_status = "Error"
+            else:
                 self.latitude = self.longitude = 0.0
                 self.gps_timestamp = 0
                 self.heading = self.heading if self.fixed_heading else 0.0
-                self.logger.error("gpsd error, nofix")
+                self.logger.error("Trying to use GPS, but can't connect to gpsd")
                 self.gps_status = "Error"
-        else:
-            self.logger.error("Trying to use GPS, but can't connect to gpsd")
-            self.gps_status = "Error"
 
         # output position, regardless of what result is
         position = {"gps_status": self.gps_status, "timestamp": self.gps_timestamp, "latitude": self.latitude,
