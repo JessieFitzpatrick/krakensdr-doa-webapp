@@ -58,7 +58,6 @@ from variables import (
     root_path,
     shared_path,
     status_file_path,
-    position_file_path
 )
 
 # os.environ['OPENBLAS_NUM_THREADS'] = '4'
@@ -1099,7 +1098,6 @@ class SignalProcessor(threading.Thread):
 
                     self.gps_status = "Connected"
                     self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
-                    output_current_position(self.gps_timestamp, self.latitude, self.longitude, self.heading, comment)
 
                 except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
                     self.latitude = self.longitude = 0.0
@@ -1804,10 +1802,3 @@ def calculate_doa_papr(DOA_data):
        self.squelch_mask = np.ones(len(self.filtered_signal))*self.squelch_threshold
        self.processed_signal = np.zeros([self.channel_number, len(self.filtered_signal)])
 """
-
-
-def output_current_position(timestamp, latitude, longitude, heading, comment):
-    position_json = {"timestamp": timestamp, "latitude": latitude, "longitude": longitude, "heading": heading,
-                     "comment": comment}
-    with open(position_file_path, 'w') as f:
-        f.write(json.dumps(position_json))

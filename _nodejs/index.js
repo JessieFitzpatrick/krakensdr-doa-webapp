@@ -329,20 +329,6 @@ function setGPSFixedHeading(heading){
     return success;
 }
 
-app.get("/getStatus", (req, res) => {
-    let rawdata = fs.readFileSync(statusJsonPath, "utf8");
-    let statusJson = JSON.parse(rawdata);
-    res.setHeader('content-type', 'application/json');
-    res.send(statusJson);
-})
-
-app.get("/getPosition", (req, res) => {
-    let rawdata = fs.readFileSync(positionJsonPath, "utf8");
-    let positionJson = JSON.parse(rawdata);
-    res.setHeader('content-type', 'application/json');
-    res.send(positionJson);
-})
-
 
 app.post("/enableGPS", (req, res) => {
     let locationSource = req.query.locationSource;
