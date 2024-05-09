@@ -9,6 +9,7 @@ from waterfall import init_waterfall
 # dash_devices
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 app.title = "Locate"
+app._favicon = ("favicon.ico")
 app.config.suppress_callback_exceptions = True
 
 # app_log = logger.getLogger('werkzeug')
