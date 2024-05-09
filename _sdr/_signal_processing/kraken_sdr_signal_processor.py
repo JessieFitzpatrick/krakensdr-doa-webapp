@@ -740,8 +740,12 @@ class SignalProcessor(threading.Thread):
 
                     try:
                         spectrum_message = ""
-                        x = self.spectrum[0, :] + self.module_receiver.daq_center_freq * 10**6
-                        spectrum_message += f"{self.timestamp}, {x[0]}, {len(x)}, {abs(x[1]-x[0])}"
+                        x = self.spectrum[0, :]
+                        if self.gps_status == "Connected":
+                            ts = self.gps_timestamp
+                        else:
+                            ts = int(time.time() * 1000)
+                        spectrum_message += f"{ts}, {self.module_receiver.daq_center_freq}, {x[0]}, {len(x)}, {abs(x[1] - x[0])}"
                         spec = self.spectrum[1, :]
                         for pow in spec:
                             spectrum_message += ", " + "{:.2f}".format(pow)
@@ -765,8 +769,12 @@ class SignalProcessor(threading.Thread):
                             message = ""
                             for j, freq in enumerate(self.freq_list):
                                 # KrakenSDR Android App Output
+                                if self.gps_status == "Connected":
+                                    ts = self.gps_timestamp
+                                else:
+                                    ts = int(time.time() * 1000)
                                 sub_message = ""
-                                sub_message += f"{self.timestamp}, {self.theta_0_list[j]}, {self.confidence_list[j]}, {self.max_power_level_list[j]}, "
+                                sub_message += f"{ts}, {self.theta_0_list[j]}, {self.confidence_list[j]}, {self.max_power_level_list[j]}, "
                                 sub_message += f"{freq}, {self.DOA_ant_alignment}, {self.latency}, {self.station_id}, "
                                 sub_message += f"{self.latitude}, {self.longitude}, {self.heading}, {self.heading}, "
                                 sub_message += "GPS, R, R, R, R"  # Reserve 6 entries for other things # NOTE: Second heading is reserved for GPS heading / compass heading differentiation
@@ -1089,8 +1097,9 @@ class SignalProcessor(threading.Thread):
                         td = time.time() - self.time_of_last_invalid_heading
                         if td >= self.gps_min_duration_for_valid_heading:
                             self.heading = round(packet.movement().get("track"), 1)
-                            comment = (f"Speed {self.speed} fast enough. Time difference {td} greater than min duration. "
-                                       f"Heading {self.heading} calculated.")
+                            comment = (
+                                f"Speed {self.speed} fast enough. Time difference {td} greater than min duration. "
+                                f"Heading {self.heading} calculated.")
                         else:
                             self.heading = 0.0
                             comment = (f"Speed {self.speed} fast enough. Time difference {td} less than min duration. "
@@ -1098,19 +1107,22 @@ class SignalProcessor(threading.Thread):
 
                     self.gps_status = "Connected"
                     self.gps_timestamp = int(round(1000.0 * packet.get_time().timestamp()))
+                    self.timestamp = self.gps_timestamp
 
                 except (gpsd.NoFixError, UserWarning, ValueError, BrokenPipeError):
                     self.latitude = self.longitude = 0.0
                     self.gps_timestamp = 0
+                    self.timestamp = int(time.time() * 1000)
                     self.heading = self.heading if self.fixed_heading else 0.0
                     self.logger.error("gpsd error, nofix")
-                    self.gps_status = "Error"
+                    self.gps_status = "NoFix"
             else:
                 self.latitude = self.longitude = 0.0
                 self.gps_timestamp = 0
+                self.timestamp = int(time.time() * 1000)
                 self.heading = self.heading if self.fixed_heading else 0.0
                 self.logger.error("Trying to use GPS, but can't connect to gpsd")
-                self.gps_status = "Error"
+                self.gps_status = "NotConnected"
 
         # output position, regardless of what result is
         position = {"gps_status": self.gps_status, "timestamp": self.gps_timestamp, "latitude": self.latitude,
